@@ -1,21 +1,34 @@
-apt-get update -y
 
-echo "Install Java"
-apt-get install openjdk-8-jdk -y
-java -version
+sudo apt-get update
+sudo apt install openjdk-8-jre-headless -y
+cd /opt
+sudo wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz   ## latest version of nexus
+tar -zxvf latest-unix.tar.gz
+sudo mv /opt/nexus-3.30.1-01 /opt/nexus   
+sudo adduser nexus
+sudo passwd nexus ##update the password for nexus
+sudo visudo
+nexus ALL=(ALL) NOPASSWD: ALL
+sudo chown -R nexus:nexus /opt/nexus
+sudo chown -R nexus:nexus /opt/sonatype-work
+sudo vi /opt/nexus/bin/nexus.rc
+    run_as_user="nexus"
+sudo vi /opt/nexus/bin/nexus.vmoptions
+   ## change the below  ../sonatype-work to ./sonatype-work
+sudo vi  /etc/systemd/system/nexus.service   
+   [Unit]
+Description=nexus service
+After=network.target
+[Service]
+Type=forking
+LimitNOFILE=65536
+ExecStart=/opt/nexus/bin/nexus start
+ExecStop=/opt/nexus/bin/nexus stop
+User=nexus
+Restart=on-abort
+[Install]
+WantedBy=multi-user.target
 
-echo "Install Nexus"
-useradd -M -d /opt/nexus -s /bin/bash -r nexus
-echo "nexus ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nexus
-mkdir /opt/nexus
-wget https://sonatype-download.global.ssl.fastly.net/repository/downloads-prod-group/3/nexus-3.29.2-02-unix.tar.gz
-tar xzf nexus-3.29.2-02-unix.tar.gz -C /opt/nexus --strip-components=1
-chown -R nexus:nexus /opt/nexus
-
-nano /opt/nexus/bin/nexus.vmoptions
-
-
-
-```
-https://www.howtoforge.com/how-to-install-and-configure-nexus-repository-manager-on-ubuntu-20-04/
-```
+sudo systemctl start nexus
+sudo systemctl enable nexus
+sudo systemctl status nexus
